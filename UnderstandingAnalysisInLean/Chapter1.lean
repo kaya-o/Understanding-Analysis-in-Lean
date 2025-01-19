@@ -1,45 +1,64 @@
 import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
 
-theorem even_of_even_sqr {m : ℕ} (h : 2 ∣ m ^ 2) : 2 ∣ m := by
-  rw [pow_two, Nat.prime_two.dvd_mul] at h
-  cases h <;> assumption
+@[simp]
+def divides (n m : ℕ) := ∃ (d : ℕ), m = n * d
+infixl:50 " divides " => divides
 
-example {m n : ℕ} (coprime_mn : m.Coprime n) : m ^ 2 ≠ 2 * n ^ 2 := by
-  intro sqr_eq
-  have : 2 ∣ m := by
-    apply even_of_even_sqr
-    rw [sqr_eq]
-    apply dvd_mul_right
-  obtain ⟨k, meq⟩ := dvd_iff_exists_eq_mul_left.mp this
-  have : 2 * (2 * k ^ 2) = 2 * n ^ 2 := by
-    rw [← sqr_eq, meq]
-    ring
-  have : 2 * k ^ 2 = n ^ 2 :=
-    (mul_right_inj' (by norm_num)).mp this
-  have : 2 ∣ n := by
-    apply even_of_even_sqr
-    rw [← this]
-    apply dvd_mul_right
-  have : 2 ∣ m.gcd n := by
-    apply Nat.dvd_gcd <;>
-    assumption
-  have : 2 ∣ 1 := by
-    convert this
-    symm
-    exact coprime_mn
-  norm_num at this
+example : 2 divides 4 := by
+    simp
+    use 2
 
---lemma h₁ : ∀ (p q : Nat), ∃ (p' q' : Nat), Nat.comprime p' q' := sorry
---
---theorem theorem_1_1_1 : ¬ ∃ (p q : Nat) , (p ^ 2) / (q ^ 2) = 2 ∧ (q < 0) := by
---    intro h
---    obtain ⟨p, q, hp⟩ := h
---    obtain ⟨p', q', h'q'_comprime⟩ := h₁ p q
---    have hcontra := hp.left
---    have q_gt_zero := hp.right
---    have step₁ : p'^2 = 2 * q'^2 := by sorry
+@[simp]
+def coprime' (n m : ℕ) := ¬ ∃ (d : ℕ), d divides n ∧ d divides m ∧ d ≠ 1
 
+lemma even_is_even_squared : ∀ (n : ℕ), 2 divides n → 2 divides n ^ 2 := by
+    intro n
+    simp
+    intro x hxn
+    use (2 * x * x)
+    rw [hxn]
+    ring_nf
+
+lemma even_squared_is_even : ∀ (n : ℕ), 2 divides n^2 → 2 divides n := by sorry
+
+
+def sqrt2_irrational_for_coprimes : ∀ (p q : ℕ), coprime' p q → (p^2) ≠ 2 * (q^2) := by
+    intro p q hcoprime
+    by_contra hcontra
+
+    have: 2 divides (p^2) := by
+        simp
+        use (q^2)
+    have two_divides_p': 2 divides p := by
+        exact even_squared_is_even p this
+    obtain ⟨r, hm⟩ := two_divides_p'
+
+    rw [hm] at hcontra
+    ring_nf at hcontra
+
+    have : 4 = 2 * 2 := by ring_nf
+    rw [this, ←Nat.mul_assoc] at hcontra
+    have two_gt_zero : 0 < 2 := by trivial
+    have : r ^ 2 * 2 = q ^ 2 := Nat.mul_right_cancel two_gt_zero hcontra
+
+    have : 2 divides q^2 := by
+        simp
+        use (r^2)
+        rw [Nat.mul_comm]
+        exact (Eq.symm this)
+
+    have two_divides_q' : 2 divides q := by
+        exact even_squared_is_even q this
+
+    have h_not_coprime: ¬ coprime' p q := by
+        simp
+        use 2
+        have h_two_ne_1 : 2 ≠ 1 := by trivial
+        exact ⟨⟨r, hm⟩, two_divides_q', h_two_ne_1⟩
+
+    contradiction
+    -- exact h_not_coprime hcoprime
 
 /-
 **Example 1.2.2.** Let
@@ -273,3 +292,65 @@ theorem exercise_1_2_5_a : |a - b| ≤ |a| + |b| := by
     split
     linarith
     linarith
+
+
+/-
+Chapter 1.3
+-/
+@[simp]
+def is_bounded_above (A : Set ℝ) := ∃ (b : ℝ), ∀ a ∈ A, a ≤ b
+def is_bounded_below (A : Set ℝ) := ∃ (b : ℝ), ∀ a ∈ A, a ≥ b
+@[simp]
+def is_bounded_above_N (A : Set ℕ) := ∃ (b : ℕ), ∀ a ∈ A, a ≤ b
+
+@[simp]
+def is_an_upper_bound_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, a ≤ s
+infixl:50 " is_an_upper_bound_of " => is_an_upper_bound_of
+@[simp]
+def is_an_upper_bound_of_N (s : ℕ) (A : Set ℕ) := ∀ a ∈ A, a ≤ s
+infixl:50 " is_an_upper_bound_of_N " => is_an_upper_bound_of_N
+def is_a_lower_bound_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, a ≥ s
+infixl:50 " is_a_lower_bound_of " => is_a_lower_bound_of
+
+lemma if_is_bounded_above_then_has_upper_bound (A : Set ℝ) (h : is_bounded_above A) : ∃ s, s is_an_upper_bound_of A := by
+    simp at h
+    obtain ⟨h, hb⟩ := h
+    use h
+    exact hb
+
+lemma if_is_bounded_above_then_has_upper_bound_N (A : Set ℕ) (h : is_bounded_above_N A) : ∃ s, s is_an_upper_bound_of_N A := by
+    simp at h
+    obtain ⟨h, hb⟩ := h
+    use h
+    exact hb
+
+def is_the_supremum_of (s : ℝ) (A : Set ℝ) := s is_an_upper_bound_of A ∧ ∀ x ∈ {x | x is_an_upper_bound_of A}, s ≤ x
+infixl:50 " is_the_supremum_of " => is_the_supremum_of
+def is_the_infimum_of (s : ℝ) (A : Set ℝ) := s is_a_lower_bound_of A ∧ ∀ x ∈ {x | x is_a_lower_bound_of A}, s ≥ x
+infixl:50 " is_the_infimum_of " => is_the_infimum_of
+
+def is_max_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, s ≥ a
+def is_min_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, s ≤ a
+
+/-
+Chapter 1.4
+-/
+-- Theorem 1.4.2
+def all_natural_numbers : (Set ℕ) := { x | true }
+theorem archimedean_property_1 : ¬ is_bounded_above_N all_natural_numbers := by
+    by_contra hcontra
+    let a := if_is_bounded_above_then_has_upper_bound_N all_natural_numbers
+    obtain ⟨b, hb⟩ := hcontra
+    let counter_example := hb (b+1)
+    have : (b+1) ∈ all_natural_numbers := by rfl
+    let contra := counter_example this
+    linarith
+
+theorem archimedean_property_2 : ∀ (y : ℝ), ∃ n, 1 / n < y := by
+    intro y
+    by_cases 1 < y
+    case pos hpos =>
+        use 2 / y
+        norm_num
+        linarith
+    case neg hpos =>  sorry
