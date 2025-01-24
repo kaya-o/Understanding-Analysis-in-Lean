@@ -284,6 +284,31 @@ theorem example_1_2_2_d : ∀ (A B C : Set ℕ), A ∩ (B ∩ C) = (A ∩ B) ∩
             exact ⟨h₀.left, h₀.right⟩
     ext x
     exact my_lemma x
+
+theorem example_1_2_2_e : ∀ (A B C : Set ℕ), A ∩ (B ∪ C) = ( A ∩ B) ∪ (A ∩ C) := by
+    intro A B C
+    ext x
+    constructor
+    · intro h
+      have h₀ : x ∈ A ∧ x ∈ (B ∪ C) := h
+      refine (Set.mem_union x (A ∩ B) (A ∩ C)).mpr ?_
+      let right := h₀.right
+      have h₁ : x ∈ B ∨ x ∈ C := right
+      cases h₁
+      case inl hb => exact Or.inl ⟨h₀.left, hb⟩
+      case inr hc => exact Or.inr ⟨h₀.left, hc⟩
+    intro h
+    have h₀ : (x ∈ A ∧ x ∈ B) ∨ (x ∈ A ∧  x ∈ C) := h
+    cases h₀
+    case inl hab =>
+        have ha : x ∈ A := hab.left
+        have hb : x ∈ B := hab.right
+        exact ⟨ha, Or.inl hb⟩
+    case inr hac =>
+        have ha : x ∈ A := hac.left
+        have hc : x ∈ C := hac.right
+        exact ⟨ ha, Or.inr hc⟩
+
 /-
 End of chapter exercises
 -/
