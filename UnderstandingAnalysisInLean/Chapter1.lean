@@ -1,64 +1,53 @@
 import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
 
-@[simp]
-def divides (n m : ℕ) := ∃ (d : ℕ), m = n * d
-infixl:50 " divides " => divides
-
-example : 2 divides 4 := by
-    simp
-    use 2
-
-@[simp]
-def coprime' (n m : ℕ) := ¬ ∃ (d : ℕ), d divides n ∧ d divides m ∧ d ≠ 1
-
-lemma even_is_even_squared : ∀ (n : ℕ), 2 divides n → 2 divides n ^ 2 := by
-    intro n
-    simp
-    intro x hxn
-    use (2 * x * x)
-    rw [hxn]
-    ring_nf
-
-lemma even_squared_is_even : ∀ (n : ℕ), 2 divides n^2 → 2 divides n := by sorry
-
-
-def sqrt2_irrational_for_coprimes : ∀ (p q : ℕ), coprime' p q → (p^2) ≠ 2 * (q^2) := by
+/-
+Exercise 1.2.1
+-/
+def sqrt2_irrational_for_coprimes : ∀ (p q : ℕ), Nat.Coprime p q → (p^2) ≠ 2 * (q^2) := by
     intro p q hcoprime
     by_contra hcontra
 
-    have: 2 divides (p^2) := by
-        simp
-        use (q^2)
-    have two_divides_p': 2 divides p := by
-        exact even_squared_is_even p this
-    obtain ⟨r, hm⟩ := two_divides_p'
+    have : 2 ∣ p^2 := by
+        use q^2
+    have even_p : 2 ∣ p := Nat.Prime.dvd_of_dvd_pow Nat.prime_two this
 
-    rw [hm] at hcontra
-    ring_nf at hcontra
+    have : 2 ∣ q^2 := by
+        have : ∃ (r : ℕ), p = 2 * r := even_p
+        obtain ⟨r, hr⟩ := this
+        rw [hr] at hcontra
+        ring_nf at hcontra
+        have : 4 = 2 * 2 := by trivial
+        rw [this, ←mul_assoc] at hcontra
+        simp at hcontra
+        exact Dvd.intro_left (r ^ 2) hcontra
+    have even_q : 2 ∣ q := Nat.Prime.dvd_of_dvd_pow Nat.prime_two this
 
-    have : 4 = 2 * 2 := by ring_nf
-    rw [this, ←Nat.mul_assoc] at hcontra
-    have two_gt_zero : 0 < 2 := by trivial
-    have : r ^ 2 * 2 = q ^ 2 := Nat.mul_right_cancel two_gt_zero hcontra
-
-    have : 2 divides q^2 := by
-        simp
-        use (r^2)
-        rw [Nat.mul_comm]
-        exact (Eq.symm this)
-
-    have two_divides_q' : 2 divides q := by
-        exact even_squared_is_even q this
-
-    have h_not_coprime: ¬ coprime' p q := by
-        simp
-        use 2
-        have h_two_ne_1 : 2 ≠ 1 := by trivial
-        exact ⟨⟨r, hm⟩, two_divides_q', h_two_ne_1⟩
-
+    have hnot_coprime : ¬ p.Coprime q := Nat.not_coprime_of_dvd_of_dvd one_lt_two even_p even_q
     contradiction
-    -- exact h_not_coprime hcoprime
+
+def sqrt3_irrational_for_coprimes : ∀ (p q : ℕ), Nat.Coprime p q → (p^2) ≠ 3 * (q^2) := by
+    intro p q hcoprime
+    by_contra hcontra
+
+    have : 3 ∣ p^2 := by
+        use q^2
+    have three_divides_p : 3 ∣ p := Nat.Prime.dvd_of_dvd_pow Nat.prime_three this
+
+    have : 3 ∣ q^2 := by
+        have : ∃ (r : ℕ), p = 3 * r := three_divides_p
+        obtain ⟨r, hr⟩ := this
+        rw [hr] at hcontra
+        ring_nf at hcontra
+        have : 9 = 3 * 3 := by trivial
+        rw [this, ←mul_assoc] at hcontra
+        simp at hcontra
+        exact Dvd.intro_left (r ^ 2) hcontra
+    have three_divides_q : 3 ∣ q := Nat.Prime.dvd_of_dvd_pow Nat.prime_three this
+
+    have one_le_three : 1 < 3 := by trivial
+    have hnot_coprime : ¬ p.Coprime q := Nat.not_coprime_of_dvd_of_dvd one_le_three three_divides_p three_divides_q
+    contradiction
 
 /-
 **Example 1.2.2.** Let
@@ -267,12 +256,37 @@ example : f n ≤ f (n+1) := by
         norm_num
         exact hk
 
+/-
+Exercise 1.2.2
+-/
+theorem example_1_2_2_c : ¬ ∀ (A B C : Set ℕ), A ∩ (B ∪ C) = (A ∩ B) ∪ C := by
+    by_contra hcontra
+    specialize hcontra {1} {1} {2}
+    simp at hcontra
 
+theorem example_1_2_2_d : ∀ (A B C : Set ℕ), A ∩ (B ∩ C) = (A ∩ B) ∩ C := by
+    intro A B C
+    have my_lemma: ∀ (x : ℕ), x ∈ A ∩ (B ∩ C) ↔ x ∈ (A ∩ B) ∩ C := by
+        intro x
+        constructor
+        case mp =>
+            intro h
+            have h₀ : x ∈ A ∧ x ∈ (B ∩ C) := h
+            apply (Set.mem_inter_iff x (A ∩ B) C).mpr ?_
+            let right := h₀.right
+            have h₁ : x ∈ B ∧ x ∈ C := right
+            have h₂ : x ∈ A ∧ x ∈ B := ⟨h₀.left, h₁.left⟩
+            have h₃ : x ∈ A ∩ B := h₂
+            exact ⟨h₃, h₁.right⟩
+        case mpr =>
+            intro h
+            have h₀ : x ∈ A ∧ (x ∈ B ∧ x ∈ C) := and_assoc.mp h
+            exact ⟨h₀.left, h₀.right⟩
+    ext x
+    exact my_lemma x
 /-
 End of chapter exercises
 -/
-
-theorem div3_of_div3_sqr {m : ℕ} (h : 3 ∣ m ^ 2) : 3 ∣ m := by sorry
 
 
 theorem exercise_1_2_5_a : |a - b| ≤ |a| + |b| := by
