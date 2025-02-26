@@ -1,6 +1,8 @@
 import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
 import UnderstandingAnalysisInLean.Chapter1
+import Std.Data.List.Sort
+import Mathlib.Data.Rat.Basic
 
 /-
 Chapter 1.4
@@ -54,6 +56,7 @@ def one_to_one (f : A → B):= ∀ (a1 a2 : A), a1 ≠ a2 → f a1 ≠ f a2
 def onto (f : A → B):= ∀ (b : B), ∃ (a : A), f a = b
 
 --Definition 1.4.7
+@[simp]
 def cardinality (A B):= ∃ (f : A → B), (one_to_one f) ∧ (onto f)
 infixl:50 "~" => cardinality
 
@@ -62,8 +65,36 @@ def countable (A) := ℕ ~ A
 def uncountable (A) := ¬ (ℕ ~ A)
 
 --Theorem 1.4.11
+def neg_embedding : ℚ ↪ ℚ := ⟨(λ x ↦ -x), neg_injective⟩
+def A₁ (n : ℕ) : Finset ℚ :=
+    match n with
+    | 0 => ∅
+    | 1 =>
+        {0}
+    | (n+1) =>
+        let A'' := (Finset.image (λ (p : Fin (n+1)) ↦ (p.val : ℚ) / (((n+1) - p.val) : ℚ)) Finset.univ).filter (λ x ↦ x ≠ 0)
+        A'' ∪ A''.map neg_embedding
+
+def A (n : ℕ) : Finset ℚ :=
+    match n with
+    | 0 => ∅
+    | 1 =>
+        {0}
+    | (n+1) =>
+        let A'' := (Finset.image (λ (p : Fin (n+1)) ↦ (p.val : ℚ) / (((n+1) - p.val) : ℚ)) Finset.univ).filter (λ x ↦ x ≠ 0)
+        let A' := A'' ∪ A''.map neg_embedding
+        A' \ (Finset.range n).biUnion A₁
+
 theorem Q_is_countable: countable ℚ:= by
-sorry
+    rw [countable]
+    simp
+    let f : ℕ → ℕ → ℕ := λ p q ↦
+        let n := p + q
+        let sum₀ := (Finset.image (λ (n₀ : Fin (n-1)) ↦ A n₀) Finset.univ).sum (λ x ↦ x.card)
+        let A₀ := (A n).sort (fun a b ↦ a < b)
+
+
+
 
 theorem R_is_uncountable: uncountable ℝ := by
     intro h
