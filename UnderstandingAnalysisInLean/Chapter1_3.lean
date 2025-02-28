@@ -51,22 +51,8 @@ infixl:50 " is_the_infimum_of " => is_the_infimum_of
 def is_max_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, s ≥ a
 def is_min_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, s ≤ a
 
-theorem axiom_of_completeness {A : Set ℝ} (h1 : A.Nonempty) (h2: is_bounded_above A) : ∃ s, s is_the_supremum_of A := by
-  simp at h2
-  obtain ⟨a, ha⟩ := h1
-  obtain ⟨b, hb⟩ := h2
-  use b
-  simp
-  constructor
-  · intro y hy
-    exact hb y hy
-  intro x
-  contrapose!
-  intro h3
-  use b
-  constructor
-  · sorry
-  linarith
+axiom completeness : ∀ (A : Set ℝ) , A.Nonempty ∧ is_bounded_above A → ∃ s : ℝ , s is_the_supremum_of A
+
 
 /-
 Example 1.3.3
@@ -88,22 +74,6 @@ example : 1 is_the_supremum_of A := by
     use 1
     simp
   exact hb 1 h1
-
-example: 0 is_the_infimum_of A := by
-  simp
-  constructor
-  · intro a ha
-    rcases ha with ⟨n, hn, rfl⟩
-    apply div_nonneg
-    · linarith
-    norm_num
-  intro x
-  contrapose!
-  intro h1
-  use 0
-  constructor
-  · sorry
-  linarith
 
 /-
 Example 1.3.5
@@ -138,54 +108,14 @@ lemma open_closed_b_below : is_bounded_below openi ∧ is_bounded_below closedi 
   simp [closedi] at ha
   linarith
 
-lemma sup_open_closed_2 : 2 is_the_supremum_of openi ∧ 2 is_the_supremum_of closedi := by
-  simp
-  constructor
-  · constructor
-    · simp[openi]
-      intro a ha0 ha2
-      linarith
-    intro x
-    contrapose!
-    simp [openi]
-    intro h
-    use (x+2)/2
-    constructor
-    · constructor
-      · by_cases 2 < x
-        case pos h1 =>
-          linarith
-        case neg h2 =>
-          push_neg at h2
-          norm_num
-          refine lt_add_of_pos_of_lt ?ha ?hbc
-          · sorry
-          norm_num
-      linarith
-    linarith
+lemma sup_closed_is_2 : 2 is_the_supremum_of closedi := by
   constructor
   · simp [closedi]
   intro b hb
   have h1 : 2 ∈ closedi := by simp [closedi]
   exact hb 2 h1
 
-lemma inf_open_closed_0 : 0 is_the_infimum_of openi ∧ 0 is_the_infimum_of closedi := by
-  simp
-  constructor
-  · constructor
-    · simp[openi]
-      intro a ha0 ha
-      linarith
-    intro x
-    contrapose!
-    simp [openi]
-    intro h
-    use (x+2)/2
-    constructor
-    · constructor
-      · linarith
-      sorry
-    sorry
+lemma inf_closed_0 : 0 is_the_infimum_of closedi := by
   constructor
   · simp[closedi]
     intro a ha0 ha
@@ -234,24 +164,25 @@ example : is_bounded_above_Q S := by
 /-
 Lemma 1.3.7
 -/
-lemma sup_char (s : ℝ) : s is_the_supremum_of A ↔ ∀ ε : ℝ, ε > 0 → ∃ a ∈ A, s - ε < a := by
+
+lemma sup (A : Set ℝ ) (s : ℝ) (h1 : s is_an_upper_bound_of A): s is_the_supremum_of A ↔ ∀ ε : ℝ, ε > 0 → ∃ a ∈ A, s - ε < a := by
   constructor
   · intro h ε hε
-    have h1 : s - ε < s := sub_lt_self s hε
-    simp at h
+    simp at h h1
     rcases h with ⟨h2, h3⟩
-    specialize h3 (s - ε)
-    by_contra hc
-    push_neg at hc
+    by_contra! hc
     have h4 : (s - ε) is_an_upper_bound_of A := by
       intro a ha
       exact hc a ha
-    have h5 : s ≤ s - ε := by exact h3 hc
+    have h5 : s ≤ s - ε := by
+      exact h3 (s - ε) h4
     linarith
   intro h
-  simp
   constructor
-  · intro b hb
-    sorry
-  intro b ha
-  sorry
+  · exact h1
+  intro b hb
+  by_contra! hc
+  specialize h (s-b) (by linarith)
+  rcases h with ⟨a, ha, h₀⟩
+  simp at hb
+  linarith [hb a ha]
