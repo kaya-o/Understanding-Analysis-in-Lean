@@ -182,7 +182,80 @@ lemma sup (A : Set ℝ ) (s : ℝ) (h1 : s is_an_upper_bound_of A): s is_the_sup
   · exact h1
   intro b hb
   by_contra! hc
-  specialize h (s-b) (by linarith)
+  specialize h (s - b)
+  specialize h (by linarith)
   rcases h with ⟨a, ha, h₀⟩
   simp at hb
   linarith [hb a ha]
+
+/-
+Exercise 1.3.2.b
+-/
+
+lemma inf (A : Set ℝ ) (i : ℝ) (h1 : i is_a_lower_bound_of A): i is_the_infimum_of A ↔ ∀ ε : ℝ, ε > 0 → ∃ a ∈ A, i + ε > a := by
+constructor
+· intro h ε hε
+  simp at h h1
+  rcases h with ⟨h2, h3⟩
+  by_contra! hc
+  have h4 : (i + ε) is_a_lower_bound_of A := by
+    intro a ha
+    exact hc a ha
+  have h5 : i ≥ i + ε := by
+    exact h3 (i + ε) h4
+  linarith
+intro h
+constructor
+· exact h1
+intro b hb
+by_contra! hc
+specialize h (b - i)
+specialize h (by linarith)
+rcases h with ⟨a, ha, h₀⟩
+simp at hb
+linarith [hb a ha]
+
+/-
+Exercise 1.3.3.a
+-/
+section
+variable (A : Set ℝ) (hA : is_bounded_below A)
+def B := {b | b is_a_lower_bound_of A}
+variable (hB : is_bounded_above (B A))
+
+example : ∃ s, s is_the_supremum_of (B A) ∧ s is_the_infimum_of A := by
+  obtain ⟨b, hb⟩ := hA
+  have h1 : (B A).Nonempty := by
+    use b
+    exact hb
+
+  /-
+  have h2 : is_bounded_above (B A) := by
+    use b
+    intro x hx
+  -/
+
+  obtain ⟨s, hs⟩ := completeness (B A) ⟨h1, hB⟩
+  use s
+  constructor
+  · exact hs
+  constructor
+  · intro a ha
+    obtain ⟨hs1, hs2⟩ := hs
+    exact hs2 a fun a_1 a_2 ↦ a_2 a ha
+  intro x hx
+  obtain ⟨hs1, hs2⟩ := hs
+  exact hs1 x hx
+end
+/-
+Exercise 1.3.7
+-/
+
+example (A : Set ℝ) (a : ℝ) : a is_an_upper_bound_of A ∧ a ∈ A → a is_the_supremum_of A := by
+intro h
+rcases h with ⟨h1, h2⟩
+constructor
+· exact h1
+simp
+intro x ha
+exact ha a h2
