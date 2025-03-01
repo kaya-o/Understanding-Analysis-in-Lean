@@ -69,11 +69,12 @@ example : 1 is_the_supremum_of A := by
     · norm_num
       linarith
     norm_num
-  intro b hb
-  have h1 : 1 ∈ A := by
-    use 1
-    simp
-  exact hb 1 h1
+
+  · intro b hb
+    have h1 : 1 ∈ A := by
+      use 1
+      simp
+    exact hb 1 h1
 
 /-
 Example 1.3.5
