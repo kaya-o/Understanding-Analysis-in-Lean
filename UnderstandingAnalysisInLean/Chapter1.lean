@@ -2,7 +2,7 @@ import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
 
 /-
-Exercise 1.2.1
+Exercise 1.1.1
 -/
 def sqrt2_irrational_for_coprimes : ∀ (p q : ℕ), Nat.Coprime p q → (p^2) ≠ 2 * (q^2) := by
     intro p q hcoprime
@@ -76,14 +76,13 @@ example : ⋃ (n : Nat) (h : n > 0), S n = S 1 := by
     unfold S
     apply Set.eq_of_forall_subset_iff
     intro K
-    constructor
     simp
+    constructor
     case h.mp =>
         intro h y hy
         have h₀ : {x | 1 ≤ x} ⊆ K := (h 1) (zero_lt_one)
         exact h₀ hy
     case h.mpr =>
-        simp
         intro h z hz y hy
         have h₀ : {x | z ≤ x} ⊆ {x | 1 ≤ x} := by
             apply Set.setOf_subset_setOf.mpr
@@ -110,11 +109,8 @@ example : ⋂ (n : Nat) (h : n > 0), S n = ∅ := by
         intro hy
         simp at hy
         apply False.elim
-        have h_inf : ∀ n > 0, n ≤ y := hy
-        specialize h_inf (y+1) (Nat.succ_pos y)
-        have h₁ : (y+1) ∉ S y := by linarith
-        have h₂ : (y+1) ∈ S y := by linarith
-        contradiction
+        specialize hy (y+1) (Nat.succ_pos y)
+        linarith
     case h.mpr =>
         intro hy
         simp at hy
@@ -217,26 +213,30 @@ lemma av_triangle_inequality {a b c : ℝ} : |a - b| ≤ |a - c| + |c - b| := by
 /-
 Example 1.2.6
 -/
+lemma av_of_nonzero_is_pos (h : a - b ≠ 0) : 0 < av (a - b) := by
+    rw [av]
+    split_ifs
+    case pos hpos => exact lt_of_le_of_ne hpos (id (Ne.symm h))
+    case neg hneg =>
+        norm_num
+        let hneg₀ := lt_of_not_ge hneg
+        exact sub_neg.mp hneg₀
+
 lemma eq_iff_sub_lt_forall {a b : ℝ} : a = b ↔ ∀ ε > 0, |a - b| < ε := by
     simp
     constructor
     case mp =>
-        intro h₁ h₂ h₃
-        rw [av]
-        split
-        linarith
-        linarith
+        intro a_eq_b ε ε_gt_0
+        rw [av, a_eq_b]
+        norm_num
+        exact ε_gt_0
     case mpr =>
-        intro h₄
-        rw [av] at h₄
-        split at h₄
-        case isTrue h₅ =>
-            have h₇ : a - b ≤ 0 := forall_lt_iff_le'.mp h₄
-            linarith
-        case isFalse h₉ =>
-            simp at h₄
-            have h₁₀ : b - a ≤ 0 := forall_lt_iff_le'.mp h₄
-            linarith
+        intro all_ε_lt_abs_a_min_b
+        by_contra hcontra
+        specialize all_ε_lt_abs_a_min_b (av (a - b))
+        have a_min_b_ne_0 : a - b ≠ 0 := sub_ne_zero_of_ne hcontra
+        have : 0 < av (a - b) := by exact av_of_nonzero_is_pos a_min_b_ne_0
+        exact (lt_self_iff_false (av (a - b))).mp (all_ε_lt_abs_a_min_b this) -- contradiction doesn't solve the goal
 
 /-
 Example 1.2.7
