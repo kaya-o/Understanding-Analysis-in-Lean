@@ -48,8 +48,10 @@ infixl:50 " is_the_supremum_of " => is_the_supremum_of
 def is_the_infimum_of (s : ℝ) (A : Set ℝ) := s is_a_lower_bound_of A ∧ ∀ x ∈ {x | x is_a_lower_bound_of A}, s ≥ x
 infixl:50 " is_the_infimum_of " => is_the_infimum_of
 
-def is_max_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, s ≥ a
-def is_min_of (s : ℝ) (A : Set ℝ) := ∀ a ∈ A, s ≤ a
+@[simp]
+def is_max_of (s : ℝ) (A : Set ℝ):= ∃ s ∈ A, ∀ a ∈ A, s ≥ a
+infixl:50 " is_max_of " => is_max_of
+def is_min_of (s : ℝ) (A : Set ℝ) := ∃ s ∈ A, ∀ a ∈ A, s ≤ a
 
 axiom completeness : ∀ (A : Set ℝ) , A.Nonempty ∧ is_bounded_above A → ∃ s : ℝ , s is_the_supremum_of A
 
@@ -90,11 +92,11 @@ lemma open_closed_b_above : is_bounded_above openi ∧ is_bounded_above closedi 
     intro a ha
     simp [openi] at ha
     linarith
-  simp
-  use 2
-  intro a ha
-  simp [closedi] at ha
-  linarith
+  · simp
+    use 2
+    intro a ha
+    simp [closedi] at ha
+    linarith
 
 lemma open_closed_b_below : is_bounded_below openi ∧ is_bounded_below closedi := by
   constructor
@@ -103,20 +105,38 @@ lemma open_closed_b_below : is_bounded_below openi ∧ is_bounded_below closedi 
     intro a ha
     simp [openi] at ha
     linarith
-  simp
-  use 0
-  intro a ha
-  simp [closedi] at ha
-  linarith
+  · simp
+    use 0
+    intro a ha
+    simp [closedi] at ha
+    linarith
 
-lemma sup_closed_is_2 : 2 is_the_supremum_of closedi := by
+lemma sup_open_closed_2 : 2 is_the_supremum_of openi ∧ 2 is_the_supremum_of closedi := by
+  constructor
+  · constructor
+    · simp[openi]
+      intro a ha0 ha2
+      linarith
+    intro x
+    simp[openi]
+    intro h
+    sorry
   constructor
   · simp [closedi]
   intro b hb
   have h1 : 2 ∈ closedi := by simp [closedi]
   exact hb 2 h1
 
-lemma inf_closed_0 : 0 is_the_infimum_of closedi := by
+lemma inf_open_closed_0 : 0 is_the_infimum_of openi ∧ 0 is_the_infimum_of closedi := by
+  constructor
+  · constructor
+    · simp[openi]
+      intro a ha0 ha
+      linarith
+    intro x
+    simp[openi]
+    intro h
+    sorry
   constructor
   · simp[closedi]
     intro a ha0 ha
@@ -139,9 +159,18 @@ lemma open_no_max : ¬∃ x ∈ openi, ∀ y ∈ openi, y ≤ x := by
   use (x + 2) / 2
   constructor
   · linarith
+
   constructor
   · linarith
   linarith
+
+lemma max_is_supremum :∃ s, s is_max_of closedi ∧ s is_the_supremum_of closedi := by
+  use 2
+  constructor
+  · simp[closedi]
+    use 2
+    norm_num
+  apply sup_open_closed_2.2
 
 /-
 Example 1.3.6
@@ -178,6 +207,7 @@ lemma sup (A : Set ℝ ) (s : ℝ) (h1 : s is_an_upper_bound_of A): s is_the_sup
     have h5 : s ≤ s - ε := by
       exact h3 (s - ε) h4
     linarith
+
   intro h
   constructor
   · exact h1
@@ -205,6 +235,7 @@ constructor
   have h5 : i ≥ i + ε := by
     exact h3 (i + ε) h4
   linarith
+
 intro h
 constructor
 · exact h1
@@ -219,24 +250,29 @@ linarith [hb a ha]
 /-
 Exercise 1.3.3.a
 -/
-section
-variable (A : Set ℝ) (hA : is_bounded_below A)
-def B := {b | b is_a_lower_bound_of A}
-variable (hB : is_bounded_above (B A))
 
-example : ∃ s, s is_the_supremum_of (B A) ∧ s is_the_infimum_of A := by
-  obtain ⟨b, hb⟩ := hA
+def B (A : Set ℝ) := {b | b is_a_lower_bound_of A}
+
+example (A : Set ℝ)(hA : is_bounded_below A):∀ a ∈ A,∀ b ∈ B A, ∃ s, s is_the_supremum_of (B A) ∧ s is_the_infimum_of A := by
+  intro a ha b hb
+  obtain ⟨ab, ha1⟩ := hA
+
   have h1 : (B A).Nonempty := by
-    use b
-    exact hb
+    use ab
+    exact ha1
 
-  /-
+  have hBboundabove : ∀ a ∈ A, ∀ b ∈ B A, b ≤ a → is_bounded_above (B A) := by
+    intro a ha b hb h
+    simp
+    use a
+    intro b1 hb1
+    exact hb1 a ha
+
   have h2 : is_bounded_above (B A) := by
-    use b
-    intro x hx
-  -/
+    apply hBboundabove a ha b hb
+    exact hb a ha
 
-  obtain ⟨s, hs⟩ := completeness (B A) ⟨h1, hB⟩
+  obtain ⟨s, hs⟩ := completeness (B A) ⟨h1, h2⟩
   use s
   constructor
   · exact hs
@@ -247,7 +283,7 @@ example : ∃ s, s is_the_supremum_of (B A) ∧ s is_the_infimum_of A := by
   intro x hx
   obtain ⟨hs1, hs2⟩ := hs
   exact hs1 x hx
-end
+
 /-
 Exercise 1.3.7
 -/
