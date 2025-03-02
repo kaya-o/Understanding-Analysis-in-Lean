@@ -127,13 +127,6 @@ lemma sup_open_closed_2 : 2 is_the_supremum_of openi ∧ 2 is_the_supremum_of cl
   have h1 : 2 ∈ closedi := by simp [closedi]
   exact hb 2 h1
 
-lemma sup_closed_is_2 : 2 is_the_supremum_of closedi := by
-  constructor
-  · simp [closedi]
-  · intro b hb
-    have h1 : 2 ∈ closedi := by simp [closedi]
-    exact hb 2 h1
-
 lemma inf_open_closed_0 : 0 is_the_infimum_of openi ∧ 0 is_the_infimum_of closedi := by
   constructor
   · constructor
@@ -151,15 +144,6 @@ lemma inf_open_closed_0 : 0 is_the_infimum_of openi ∧ 0 is_the_infimum_of clos
   intro x ha
   have h1 : 0 ∈ closedi := by simp [closedi]
   exact ha 0 h1
-
-lemma inf_closed_0 : 0 is_the_infimum_of closedi := by
-  constructor
-  · simp[closedi]
-    intro a ha0 ha
-    linarith
-  · intro x ha
-    have h1 : 0 ∈ closedi := by simp [closedi]
-    exact ha 0 h1
 
 lemma closed_has_max : ∃ x ∈ closedi, ∀ y ∈ closedi, y ≤ x := by
   use 2
