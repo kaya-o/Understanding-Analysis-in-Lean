@@ -1,6 +1,5 @@
 import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
-import UnderstandingAnalysisInLean.Chapter1
 
 /-
 Chapter 1.4

@@ -1,13 +1,12 @@
 import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
-import UnderstandingAnalysisInLean.Chapter1
 import Mathlib.Data.List.Sort
 import Mathlib.Data.Real.Basic
 import Mathlib.Algebra.Order.Floor.Div
 import UnderstandingAnalysisInLean.Chapter1_4
 
 
-def decimal_expansion : Type := ℕ → Fin 10 --3,14
+def decimal_expansion : Type := ℕ → Fin 10
 
 def is_eventually_periodic (r : decimal_expansion) : Prop :=
   ∃ (p n : ℕ), p > 0 ∧ ∀ k, r (n + k) = r (n + k + p)
