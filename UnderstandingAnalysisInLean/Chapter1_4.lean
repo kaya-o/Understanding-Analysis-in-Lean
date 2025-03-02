@@ -1,6 +1,5 @@
 import Mathlib.Data.Finset.Basic
 import Mathlib.Tactic
-import UnderstandingAnalysisInLean.Chapter1
 
 /-
 Chapter 1.4
@@ -54,11 +53,14 @@ def one_to_one (f : A → B):= ∀ (a1 a2 : A), a1 ≠ a2 → f a1 ≠ f a2
 def onto (f : A → B):= ∀ (b : B), ∃ (a : A), f a = b
 
 --Definition 1.4.7
+@[simp]
 def cardinality (A B):= ∃ (f : A → B), (one_to_one f) ∧ (onto f)
 infixl:50 "~" => cardinality
 
 --Definition 1.4.10
+@[simp]
 def countable (A) := ℕ ~ A
+@[simp]
 def uncountable (A) := ¬ (ℕ ~ A)
 
 --Theorem 1.4.11
