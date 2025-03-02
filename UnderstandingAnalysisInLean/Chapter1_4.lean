@@ -45,14 +45,14 @@ def onto (f : X → Y):= ∀ (y : Y), ∃ (x : X), f x = y
 
 --Definition 1.4.7
 @[simp]
-def cardinality (A B):= ∃ (f : A → B), (one_to_one f) ∧ (onto f)
+def cardinality (X Y):= ∃ (f : X → Y), (one_to_one f) ∧ (onto f)
 infixl:50 "~" => cardinality
 
 --Definition 1.4.10
 @[simp]
-def countable (A) := ℕ ~ A
+def countable (X) := ℕ ~ X
 @[simp]
-def uncountable (A) := ¬ (ℕ ~ A)
+def uncountable (X) := ¬ (ℕ ~ X)
 
 --Theorem 1.4.11
 def neg_embedding : ℚ ↪ ℚ := ⟨(λ x ↦ -x), neg_injective⟩
